@@ -156,11 +156,11 @@ PlayerSettings:
   applicationIdentifier:
     Android: com.arpoise.ARpoise22
     Standalone: com.unity.arfoundation.samples
-    iPhone: com.arpoise.arpoise22
+    iPhone: com.arpoise.ARpoise22
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 20230823
+    iPhone: 20230827
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 2023080600
@@ -817,7 +817,7 @@ PlayerSettings:
     WebGL: UNITY_POST_PROCESSING_STACK_V2
     Windows Store Apps: UNITY_POST_PROCESSING_STACK_V2
     XboxOne: UNITY_POST_PROCESSING_STACK_V2
-    iPhone: UNITY_POST_PROCESSING_STACK_V2;UNITY_XR_ARKIT_LOADER_ENABLED;UNITY_XR_ARKIT_FACE_TRACKING_ENABLED;iOsARpoiseApp
+    iPhone: UNITY_POST_PROCESSING_STACK_V2;iOsARpoiseApp;UNITY_XR_ARKIT_LOADER_ENABLED
     tvOS: UNITY_POST_PROCESSING_STACK_V2
   additionalCompilerArguments: {}
   platformArchitecture:
