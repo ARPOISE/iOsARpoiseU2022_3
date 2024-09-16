@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44701034, g: 0.49647647, b: 0.57297623, a: 1}
+  m_IndirectSpecularColor: {r: 0.1825442, g: 0.22823118, b: 0.3070199, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2392,6 +2392,7 @@ MonoBehaviour:
   RecordingFrameRate: 0
   SceneAnchor: {fileID: 927562296}
   Wrapper: {fileID: 1570904393}
+  ArpoiseDirectoryUrl: www.arpoise.com/cgi-bin/ArpoiseDirectory.cgi
   InfoText: {fileID: 7609808323551235062}
   MenuButton: {fileID: 3491036700577019378}
   HeaderButton: {fileID: 7462290449588158478}
