@@ -47,6 +47,8 @@ namespace com.arpoise.arpoiseapp
         private readonly List<ArAnimation> _billboardAnimations = new List<ArAnimation>();
         private readonly List<ArAnimation> _inMinutesAnimations = new List<ArAnimation>();
         private readonly List<ArAnimation> _whenActiveAnimations = new List<ArAnimation>();
+        private readonly List<ArAnimation> _whenActivatedAnimations = new List<ArAnimation>();
+        private readonly List<ArAnimation> _whenDeactivatedAnimations = new List<ArAnimation>();
 
         private ArAnimation[] _allAnimations = null;
         private ArAnimation[] AllAnimations
@@ -55,14 +57,17 @@ namespace com.arpoise.arpoiseapp
             {
                 if (_allAnimations == null)
                 {
-                    _allAnimations = _onCreateAnimations
-                        .Concat(_onFollowAnimations)
-                        .Concat(_onFocusAnimations)
-                        .Concat(_inFocusAnimations)
-                        .Concat(_onClickAnimations)
-                        .Concat(_inMinutesAnimations)
-                        .Concat(_whenActiveAnimations)
-                        .ToArray();
+                    var allAnimations = new List<ArAnimation>();
+                    allAnimations.AddRange(_onCreateAnimations);
+                    allAnimations.AddRange(_onFollowAnimations);
+                    allAnimations.AddRange(_onFocusAnimations);
+                    allAnimations.AddRange(_inFocusAnimations);
+                    allAnimations.AddRange(_onClickAnimations);
+                    allAnimations.AddRange(_inMinutesAnimations);
+                    allAnimations.AddRange(_whenActiveAnimations);
+                    allAnimations.AddRange(_whenActivatedAnimations);
+                    allAnimations.AddRange(_whenDeactivatedAnimations);
+                    _allAnimations = allAnimations.ToArray();
                 }
                 return _allAnimations;
             }
@@ -77,6 +82,8 @@ namespace com.arpoise.arpoiseapp
         public List<ArObject> ArObjectsToPlace { get; private set; }
         public List<ArObject> ArObjectsRelative { get; private set; }
         public List<Poi> ArPois { get; private set; }
+        public static HashSet<long> PoisToActivate { get; private set; }
+        public static HashSet<long> PoisToDeactivate { get; private set; }
 
         public ArObjectState()
         {
@@ -84,20 +91,25 @@ namespace com.arpoise.arpoiseapp
             ArObjectsToPlace = null;
             ArObjectsRelative = null;
             ArPois = new List<Poi>();
+            PoisToActivate = new HashSet<long>();
+            PoisToDeactivate = new HashSet<long>();
         }
 
         public void SetArObjectsToPlace()
         {
             var arObjectsToPlace = new HashSet<ArObject>(ArObjects.Where(x => !x.IsRelative));
-            for (; ; )
+            var queue = new Queue<ArObject>(arObjectsToPlace);
+
+            while (queue.Count > 0)
             {
-                var childrenToPlace = arObjectsToPlace.SelectMany(x => x.ArObjects).Where(x => !x.IsRelative && !arObjectsToPlace.Contains(x)).ToList();
-                if (!childrenToPlace.Any())
+                var current = queue.Dequeue();
+                foreach (var child in current.ArObjects.Where(x => !x.IsRelative && !arObjectsToPlace.Contains(x)))
                 {
-                    break;
+                    arObjectsToPlace.Add(child);
+                    queue.Enqueue(child);
                 }
-                childrenToPlace.ForEach(x => arObjectsToPlace.Add(x));
             }
+
             ArObjectsToPlace = arObjectsToPlace.ToList();
             ArObjectsRelative = ArObjects.Where(x => x.IsRelative).ToList();
         }
@@ -138,6 +150,20 @@ namespace com.arpoise.arpoiseapp
             AllAnimations = null;
         }
 
+        public void AddWhenActivatedAnimation(ArAnimation animation)
+        {
+            //Debug.Log($"_whenActivatedAnimations '{animation.Name}', PoiId {animation.PoiId} added");
+            _whenActivatedAnimations.Add(animation);
+            AllAnimations = null;
+        }
+
+        public void AddWhenDeactivatedAnimation(ArAnimation animation)
+        {
+            //Debug.Log($"_whenDeactivatedAnimations '{animation.Name}', PoiId {animation.PoiId} added");
+            _whenDeactivatedAnimations.Add(animation);
+            AllAnimations = null;
+        }
+
         public void AddOnClickAnimation(ArAnimation animation)
         {
             _onClickAnimations.Add(animation);
@@ -160,6 +186,8 @@ namespace com.arpoise.arpoiseapp
             _onClickAnimations.RemoveAll(x => arObject.Id == x.PoiId);
             _inMinutesAnimations.RemoveAll(x => arObject.Id == x.PoiId);
             _whenActiveAnimations.RemoveAll(x => arObject.Id == x.PoiId);
+            _whenActivatedAnimations.RemoveAll(x => arObject.Id == x.PoiId);
+            _whenDeactivatedAnimations.RemoveAll(x => arObject.Id == x.PoiId);
             AllAnimations = null;
         }
 
@@ -315,6 +343,49 @@ namespace com.arpoise.arpoiseapp
                             {
                                 arAnimation.Activate(startTicks, nowTicks);
                             }
+                        }
+                    }
+                }
+            }
+
+            if (_whenActivatedAnimations.Count > 0)
+            {
+                foreach (var arAnimation in _whenActivatedAnimations)
+                {
+                    if (PoisToActivate.Contains(arAnimation.PoiId))
+                    {
+                        var deactivation = _whenDeactivatedAnimations.FirstOrDefault(x => x.IsActive && x.PoiId == arAnimation.PoiId);
+                        if (deactivation != null)
+                        {
+                            continue;
+                        }
+                        PoisToActivate.Remove(arAnimation.PoiId);
+                        if (!arAnimation.IsActive)
+                        {
+                            var arGameObject = arAnimation.GameObject;
+                            if (arGameObject != null && !arGameObject.activeSelf)
+                            {
+                                arGameObject.SetActive(true);
+                            }
+                            //Debug.Log($"Animation {arAnimation.Name}, PoiId {arAnimation.PoiId} is being activated");
+                            arAnimation.Activate(startTicks, nowTicks);
+                        }
+                    }
+                }
+            }
+
+            if (_whenDeactivatedAnimations.Count > 0)
+            {
+                foreach (var arAnimation in _whenDeactivatedAnimations)
+                {
+                    if (PoisToDeactivate.Contains(arAnimation.PoiId))
+                    {
+                        PoisToDeactivate.Remove(arAnimation.PoiId);
+                        var arGameObject = arAnimation.GameObject;
+                        if (!arAnimation.IsActive && arGameObject != null && arGameObject.activeSelf)
+                        {
+                            //Debug.Log($"Animation {arAnimation.Name}, PoiId {arAnimation.PoiId} is being activated");
+                            arAnimation.Activate(startTicks, nowTicks);
                         }
                     }
                 }
