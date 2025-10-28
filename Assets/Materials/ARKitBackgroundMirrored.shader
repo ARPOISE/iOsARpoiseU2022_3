@@ -40,7 +40,7 @@ Shader "Unlit/ARKitBackgroundMirrored"
             #pragma multi_compile_local __ ARKIT_HUMAN_SEGMENTATION_ENABLED ARKIT_ENVIRONMENT_DEPTH_ENABLED
 
 
-#if ARKIT_BACKGROUND_URP
+#if xxxxARKIT_BACKGROUND_URP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
@@ -101,8 +101,8 @@ Shader "Unlit/ARKitBackgroundMirrored"
                 float4 position = TransformObjectToHClip(v.position);
 
                 // Remap the texture coordinates based on the device rotation.
-                // float2 texcoord = mul(float3(v.texcoord, 1.0f), _UnityDisplayTransform).xy;
-				float2 texcoord = mul(float3(1.0f - v.texcoord.x, v.texcoord.y, 1.0f), _UnityDisplayTransform).xy;
+                //float2 texcoord = mul(float4(v.texcoord, 1.0f, 1.0f), _UnityDisplayTransform).xy;
+                float2 texcoord = mul(float4(1.0f - v.texcoord.x, v.texcoord.y, 1.0f, 1.0f), _UnityDisplayTransform).xy;
 
                 v2f o;
                 o.position = position;
