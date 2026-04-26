@@ -33,7 +33,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.XR.CoreUtils;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -123,78 +122,66 @@ namespace com.arpoise.arpoiseapp
             }
         }
 
-        [NonSerialized]
-        public volatile bool TakeScreenshot = false;
-        protected IEnumerator TakeScreenshotRoutine()
+        protected IEnumerator TakeScreenshot()
         {
-            //Console.WriteLine($"----> TakeScreenshotRoutine, size {ShowScreenshotButton}");
+            //Console.WriteLine($"----> TakeScreenshot, size {ShowScreenshotButton}");
 
-            for (; ; )
+            var menuButtonActive = MenuButton.activeSelf;
+            if (menuButtonActive)
             {
-                while (!TakeScreenshot || ShowScreenshotButton < 1)
-                {
-                    yield return new WaitForSeconds(.01f);
-                }
+                MenuButton.SetActive(false);
+            }
+            var screenshotButtonActive = ScreenshotButton.activeSelf;
+            if (screenshotButtonActive)
+            {
+                ScreenshotButton.SetActive(false);
+            }
+            var headerButtonActive = HeaderButton.activeSelf;
+            if (headerButtonActive)
+            {
+                HeaderButton.SetActive(false);
+            }
+            var infoTextActive = InfoText.activeSelf;
+            if (infoTextActive)
+            {
+                InfoText.SetActive(false);
+            }
+            var audioSource = ScreenshotButton.GetComponent<AudioSource>();
+            if (audioSource != null)
+            {
+                audioSource.mute = false;
+            }
+            yield return new WaitForEndOfFrame();
 
-                var menuButtonActive = MenuButton.activeSelf;
-                if (menuButtonActive)
-                {
-                    MenuButton.SetActive(false);
-                }
-                var screenshotButtonActive = ScreenshotButton.activeSelf;
-                if (screenshotButtonActive)
-                {
-                    ScreenshotButton.SetActive(false);
-                }
-                var headerButtonActive = HeaderButton.activeSelf;
-                if (headerButtonActive)
-                {
-                    HeaderButton.SetActive(false);
-                }
-                var infoTextActive = InfoText.activeSelf;
-                if (infoTextActive)
-                {
-                    InfoText.SetActive(false);
-                }
-                var audioSource = ScreenshotButton.GetComponent<AudioSource>();
-                if (audioSource != null)
-                {
-                    audioSource.mute = false;
-                }
-                yield return new WaitForEndOfFrame();
+            if (audioSource != null)
+            {
+                audioSource.Play();
+            }
 
-                if (audioSource != null)
-                {
-                    audioSource.Play();
-                }
-
-                var name = $"Screenshot_{DateTime.Now:yyMMdd_HHmmss_fff}.png";
-                var texture = ScreenCapture.CaptureScreenshotAsTexture(ShowScreenshotButton);
-                //Console.WriteLine($"----> Screenshot, name {name}, size {ShowScreenshotButton}");
+            var name = $"Screenshot_{DateTime.Now:yyMMdd_HHmmss_fff}.png";
+            var texture = ScreenCapture.CaptureScreenshotAsTexture(ShowScreenshotButton);
+            //Console.WriteLine($"----> Screenshot, name {name}, size {ShowScreenshotButton}");
 #if ARpoiseApp
-                SaveImageToGallery(texture, "ARpoise", name);
+            SaveImageToGallery(texture, "ARpoise", name);
 #endif
-                yield return new WaitForEndOfFrame();
+            Destroy(texture);
+            yield return new WaitForEndOfFrame();
 
-                if (menuButtonActive)
-                {
-                    MenuButton.SetActive(true);
-                }
-                if (screenshotButtonActive)
-                {
-                    ScreenshotButton.SetActive(true);
-                }
-                if (headerButtonActive)
-                {
-                    HeaderButton.SetActive(true);
-                }
-                if (infoTextActive)
-                {
-                    InfoText.SetActive(true);
-                }
-                yield return new WaitForEndOfFrame();
-
-                TakeScreenshot = false;
+            if (menuButtonActive)
+            {
+                MenuButton.SetActive(true);
+            }
+            if (screenshotButtonActive)
+            {
+                ScreenshotButton.SetActive(true);
+            }
+            if (headerButtonActive)
+            {
+                HeaderButton.SetActive(true);
+            }
+            if (infoTextActive)
+            {
+                InfoText.SetActive(true);
             }
         }
 
@@ -453,6 +440,7 @@ namespace com.arpoise.arpoiseapp
         {
             createdObject = null;
             arObject = null;
+            var name = objectToAdd?.name;
 
             // Create a copy of the object
             if (string.IsNullOrWhiteSpace(poi.LindenmayerString))
@@ -468,6 +456,7 @@ namespace com.arpoise.arpoiseapp
                     leafToAdd = ArAssetBundleManager.TryLoadGameObject(poi.BaseUrl, leafPrefab);
                 }
 
+
                 objectToAdd = ArCreature.Create(
                     poi.LindenmayerDerivations,
                     poi.LindenmayerString,
@@ -481,7 +470,7 @@ namespace com.arpoise.arpoiseapp
             }
             if (objectToAdd == null)
             {
-                return $"Instantiate({objectToAdd.name}) failed";
+                return $"Instantiate({name}) failed";
             }
 
             // Load script components that are not in the prefab, but are compiled into the app
@@ -1297,10 +1286,7 @@ namespace com.arpoise.arpoiseapp
         private static long _arObjectId = -1000000000;
         public static long ArObjectId
         {
-            get
-            {
-                return _arObjectId--;
-            }
+            get { return _arObjectId--; }
         }
         private static readonly System.Random _random = new System.Random((int)DateTime.Now.Ticks);
 
@@ -1312,49 +1298,49 @@ namespace com.arpoise.arpoiseapp
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiRain>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiSphere>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiGrid>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiGate>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiSpiral>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiAtomSuperpos>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
                 arpoisePoiStructure = crystalObject.gameObject.GetComponent<ArpoisePoiAtomEntangled>();
                 if (arpoisePoiStructure != null)
                 {
                     arpoisePoiStructure.CallUpdate();
-                    break;
+                    continue;
                 }
             }
             base.Update();
