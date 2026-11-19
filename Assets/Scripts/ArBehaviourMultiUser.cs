@@ -58,7 +58,7 @@ namespace com.arpoise.arpoiseapp
         public const string OperatingSystem = "Android";
 #endif
 #endif
-        public const int Bundle = 2026100801;
+        public const int Bundle = 2026101800;
         public const string ArvosApplicationName = "Arvos";
         public const string ArpoiseApplicationName = "Arpoise";
         public const string UgApplicationName = "UnexpectedGrowth";
@@ -76,6 +76,7 @@ namespace com.arpoise.arpoiseapp
         public const string AnimationTag = "Animation";
         public const string LockTag = "Lock";
         public const string VeraPlasticTag = "VePl";
+        public const string ArduinoTag = "Arduino";
         #region Globals
         public GameObject InfoText = null;
         public GameObject HeaderButton = null;
@@ -370,6 +371,7 @@ namespace com.arpoise.arpoiseapp
         bool _isPaused = false;
         void OnApplicationFocus(bool hasFocus)
         {
+#if !UNITY_EDITOR && !WindowsARpoise
             var isPaused = !hasFocus;
             if (isPaused != _isPaused)
             {
@@ -379,6 +381,7 @@ namespace com.arpoise.arpoiseapp
                 }
                 _isPaused = isPaused;
             }
+#endif
         }
 
         void OnApplicationPause(bool pauseStatus)
@@ -589,7 +592,7 @@ namespace com.arpoise.arpoiseapp
                                 value = parts[++i];
                                 break;
                             }
-                            else if (LockTag == parts[i] || VeraPlasticTag == parts[i])
+                            else if (LockTag == parts[i] || VeraPlasticTag == parts[i] || ArduinoTag == parts[i])
                             {
                                 tag = parts[i];
                                 value = parts[++i];
